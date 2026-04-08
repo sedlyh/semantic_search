@@ -2,6 +2,8 @@
 
 > This document walks you through **every file, every line, and every concept** in this project.
 > It is written for someone who knows what variables, functions, imports, loops, and classes are — but is encountering most of these libraries and patterns for the first time.
+> **Note:** The Streamlit UI (`search_app.py`) and root `Dockerfile` were removed. Use **FastAPI** + **Next.js** only; deploy the API with AWS App Runner from source (or another Python host) as described in `README.md`.
+
 > Read it top-to-bottom the first time; use the table of contents to jump around later.
 
 ---
@@ -19,20 +21,18 @@
    - [embed_listings.py](#52-embed_listingspy)
    - [core.py](#53-corepy)
    - [server.py](#54-serverpy)
-   - [search_app.py](#55-search_apppy)
-   - [\_\_init\_\_.py](#56-__init__py)
-   - [requirements.txt](#57-requirementstxt)
-   - [Dockerfile](#58-dockerfile)
-   - [web/lib/types.ts](#59-weblibtypests)
-   - [web/app/globals.css](#510-webappglobalscss)
-   - [web/app/layout.tsx](#511-webapplayouttsx)
-   - [web/app/page.tsx](#512-webapppagetsx)
-   - [web/components/SearchPanel.tsx](#513-webcomponentssearchpaneltsx)
-   - [web/next.config.ts](#514-webnextconfigts)
-   - [web/postcss.config.mjs](#515-webpostcssconfigmjs)
-   - [web/tsconfig.json](#516-webtsconfigjson)
-   - [web/.env.local.example](#517-webenvlocalexample)
-   - [web/package.json](#518-webpackagejson)
+   - [\_\_init\_\_.py](#55-__init__py)
+   - [requirements.txt](#56-requirementstxt)
+   - [web/lib/types.ts](#57-weblibtypests)
+   - [web/app/globals.css](#58-webappglobalscss)
+   - [web/app/layout.tsx](#59-webapplayouttsx)
+   - [web/app/page.tsx](#510-webapppagetsx)
+   - [web/components/SearchPanel.tsx](#511-webcomponentssearchpaneltsx)
+   - [web/next.config.ts](#512-webnextconfigts)
+   - [web/postcss.config.mjs](#513-webpostcssconfigmjs)
+   - [web/tsconfig.json](#514-webtsconfigjson)
+   - [web/.env.local.example](#515-webenvlocalexample)
+   - [web/package.json](#516-webpackagejson)
 6. [How to Run the Project](#6-how-to-run-the-project)
 7. [Key Concepts Glossary](#7-key-concepts-glossary)
 8. [Next Steps for Learning](#8-next-steps-for-learning)
@@ -145,7 +145,7 @@ npm install
 - **What it is:** An open-source **vector database**. A vector database is specialized for storing and quickly searching through collections of numerical arrays (vectors).
 - **What problem it solves:** If you had 10,000 listings, each represented as a list of 384 numbers, you *could* loop through all 10,000 and calculate distance yourself — but that would be painfully slow and would not scale. ChromaDB uses an efficient algorithm called **HNSW** (Hierarchical Navigable Small World) that finds the closest vectors without checking every single one.
 - **Analogy:** ChromaDB is like a filing cabinet with a smart index — instead of opening every drawer to find the closest match, it knows which drawers to skip.
-- **Used in:** `embed_listings.py` (to store vectors), `core.py` (to query vectors), `server.py` and `search_app.py` (indirectly, through `core.py`).
+- **Used in:** `embed_listings.py` (to store vectors), `core.py` (to query vectors), `server.py` (indirectly, through `core.py`).
 
 #### sentence-transformers (>= 2.2.0)
 
@@ -154,12 +154,6 @@ npm install
 - **Analogy:** If the raw transformer model is a full orchestra, `sentence-transformers` is the conductor who organizes everything so you just hear a clean, finished piece of music.
 - **Used in:** `embed_listings.py` (encoding all listing descriptions) and `core.py` (encoding the user's search query at query time).
 
-#### streamlit (>= 1.28.0)
-
-- **What it is:** A Python library that turns a plain Python script into a web application with text inputs, buttons, sliders, and rendered output — with no HTML or CSS needed.
-- **What problem it solves:** Building a proper web frontend from scratch requires learning HTML, CSS, and JavaScript. Streamlit lets a Python developer create a usable UI in minutes.
-- **Analogy:** Streamlit is like a slide-deck builder for data apps — you describe what you want to show, and it handles the layout and interactivity.
-- **Used in:** `search_app.py` (the alternative Streamlit-based UI for the search engine).
 
 #### pandas (>= 2.0.0)
 
@@ -180,7 +174,7 @@ npm install
 - **What it is:** An **ASGI server** — the actual program that listens for network connections on a port (like port 8000) and passes incoming HTTP requests to your FastAPI code.
 - **What problem it solves:** FastAPI defines *what* to do with requests, but it cannot listen to the network by itself. Uvicorn handles the low-level networking: opening a socket, accepting connections, speaking HTTP.
 - **Analogy:** If FastAPI is the chef, Uvicorn is the waiter who stands at the door, takes orders from customers, and brings them to the kitchen.
-- **Used in:** The command line (you run `uvicorn semantic_search.server:app ...`) and inside the `Dockerfile` `CMD` instruction.
+- **Used in:** The command line (you run `uvicorn semantic_search.server:app ...`) and in production (e.g. App Runner or your host's start command).
 
 ### 3.2 JavaScript/Next.js Dependencies (`package.json`)
 
@@ -233,11 +227,9 @@ semantic_search/
 ├── __init__.py              ← Makes this folder a Python package
 ├── constants.py             ← Single source of truth: file paths, model name, collection name
 ├── embed_listings.py        ← Offline script: CSV → embeddings → ChromaDB
-├── core.py                  ← Shared search logic (used by both server.py and search_app.py)
+├── core.py                  ← Shared search logic (used by server.py)
 ├── server.py                ← FastAPI REST API (serves /search and /health)
-├── search_app.py            ← Streamlit UI (alternative frontend)
 ├── requirements.txt         ← Python library versions
-├── Dockerfile               ← Container recipe for the API
 ├── chroma_data/             ← Generated vector database files (created by embed_listings.py)
 ├── README.md                ← Original project overview
 ├── LEARN.md                 ← This file (study guide)
@@ -309,7 +301,7 @@ constants.py          ← imported by everything below
     │       │
     │       ├── server.py       (also imports: fastapi, pydantic, os, sys)
     │       │
-    │       └── search_app.py   (also imports: streamlit)
+    │       └── (Next.js only; no Streamlit)
     │
     └── (Next.js frontend does NOT import Python files —
          it talks to server.py over HTTP)
@@ -421,7 +413,7 @@ The identifier of the embedding model on Hugging Face. `all-MiniLM-L6-v2` is a s
 
 #### d. How this file connects to the rest
 
-- **Imported by:** `embed_listings.py`, `core.py`, `server.py`, `search_app.py`.
+- **Imported by:** `embed_listings.py`, `core.py`, `server.py`.
 - **Imports from:** nothing in this project (only the built-in `pathlib`).
 
 ---
@@ -569,7 +561,7 @@ Creates an **argument parser** — an object that will define what command-line 
     parser.add_argument(
         "--model",
         default=DEFAULT_MODEL,
-        help="Must stay in sync with search_app.py / constants.py",
+        help="Must stay in sync with core.py / constants.py",
     )
 ```
 
@@ -788,7 +780,7 @@ Adds data to ChromaDB in **chunks** of 500 items. Why not all at once? Sending 1
 
 ```python
     print(f"Done. Vector store: {CHROMA_DIR}")
-    print("Next: streamlit run semantic_search/search_app.py")
+    print("Next: uvicorn semantic_search.server:app --host 0.0.0.0 --port 8000")
 ```
 
 Success messages. The second line tells the user what to do next.
@@ -806,7 +798,7 @@ if __name__ == "__main__":
 
 - **Imports from:** `constants.py` (paths, model name), plus `chromadb`, `pandas`, `sentence_transformers`.
 - **Called by:** You, manually, from the terminal. No other file in this project runs it.
-- **Produces:** The `chroma_data/` folder, which `core.py` (and therefore `server.py` and `search_app.py`) depend on.
+- **Produces:** The `chroma_data/` folder, which `core.py` (and therefore `server.py`) depend on.
 
 ---
 
@@ -814,7 +806,7 @@ if __name__ == "__main__":
 
 #### a. Purpose
 
-This file contains the **shared search logic** — the function `search_listings()` that both `server.py` (the API) and `search_app.py` (the Streamlit UI) call. By putting the search logic in one place, you avoid duplicating code and ensure both frontends produce identical results.
+This file contains the **shared search logic** — the function `search_listings()` that `server.py` (the API) calls. By putting the search logic in one place, you avoid duplicating code and ensure both frontends produce identical results.
 
 #### b. Imports
 
@@ -1042,7 +1034,7 @@ Builds a dictionary for each result and appends it to the output list. Each dict
 #### d. How this file connects to the rest
 
 - **Imports from:** `constants.py`, `chromadb`, `sentence_transformers`.
-- **Imported by:** `server.py`, `search_app.py`.
+- **Imported by:** `server.py`.
 - **Depends on:** The `chroma_data/` folder created by `embed_listings.py`.
 
 ---
@@ -1294,219 +1286,12 @@ Tries to open the collection. If it fails (corrupted data, wrong collection name
 
 ---
 
-### 5.5 `search_app.py`
-
-#### a. Purpose
-
-This file is an **alternative frontend** built with Streamlit — a Python-only web UI. You do not need the Next.js frontend to use the search engine; this script gives you a working UI by itself. It is useful for quick prototyping and for people who are not comfortable with JavaScript.
-
-#### b. Imports
-
-```python
-from __future__ import annotations
-
-import sys
-from pathlib import Path
-
-_SCRIPT_DIR = Path(__file__).resolve().parent
-if str(_SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPT_DIR))
-```
-
-Same future import and path hack as the other files.
-
----
-
-```python
-import streamlit as st
-```
-
-Imports Streamlit with the conventional alias `st`. You will see `st.title(...)`, `st.text_input(...)`, `st.button(...)`, etc.
-
----
-
-```python
-from constants import CHROMA_DIR, COLLECTION_NAME, DEFAULT_MODEL
-from core import get_collection, search_listings, vector_store_ready
-```
-
-Same constants and shared search logic.
-
-#### c. Line-by-line walkthrough
-
-```python
-def main() -> None:
-    st.set_page_config(page_title="Florida listings — semantic search", layout="wide")
-```
-
-- **`st.set_page_config(...)`** sets the browser tab title and page layout. `layout="wide"` uses the full browser width instead of a narrow centered column.
-
----
-
-```python
-    st.title("Semantic search over MLS descriptions")
-    st.markdown(
-        "Search by **meaning** (not exact keywords). "
-        "Each listing was embedded with the same model used here."
-    )
-```
-
-- **`st.title(...)`** renders a large heading.
-- **`st.markdown(...)`** renders text with Markdown formatting (like `**bold**`).
-
----
-
-```python
-    if not vector_store_ready():
-        st.error(
-            f"No data at `{CHROMA_DIR}`. "
-            "Run `python semantic_search/embed_listings.py` first."
-        )
-        return
-```
-
-If the vector store does not exist, show a red error box and stop. `return` exits the `main()` function early so the rest of the UI does not render.
-
----
-
-```python
-    try:
-        get_collection()
-    except Exception as e:
-        st.error(f"Could not open collection `{COLLECTION_NAME}`: {e}")
-        return
-```
-
-Same defensive check — try to open the collection, and show an error if it fails.
-
----
-
-```python
-    model_id = st.sidebar.text_input(
-        "Embedding model",
-        value=DEFAULT_MODEL,
-        help="Change only if you re-embedded with a different --model.",
-    )
-    k = st.sidebar.slider("How many results", 1, 20, 5)
-```
-
-- **`st.sidebar`** places widgets in a collapsible sidebar on the left.
-- **`st.sidebar.text_input(...)`** creates a text input field pre-filled with the default model name.
-- **`st.sidebar.slider("How many results", 1, 20, 5)`** creates a slider from 1 to 20, defaulting to 5.
-
----
-
-```python
-    query = st.text_input(
-        "Your search",
-        placeholder="e.g. gated community golf course renovated kitchen",
-    )
-```
-
-A text input in the main area. `placeholder` is the gray hint text shown when the input is empty.
-
----
-
-```python
-    if st.button("Search") and query.strip():
-        hits = search_listings(query, k=k, model_id=model_id)
-```
-
-- **`st.button("Search")`** renders a clickable button. It returns `True` when clicked.
-- `and query.strip()` ensures the query is not empty.
-- If both conditions are met, call the shared search function.
-
----
-
-```python
-        st.subheader("Results")
-        for rank, hit in enumerate(hits, start=1):
-```
-
-- **`st.subheader(...)`** renders a smaller heading.
-- **`enumerate(hits, start=1)`** loops through `hits` and provides a counter starting at 1 (so the first result is rank 1, not rank 0).
-
----
-
-```python
-            doc_id = hit["id"]
-            text = hit["text"]
-            meta = hit.get("metadata") or {}
-            dist = hit.get("distance")
-            sim = hit.get("similarity")
-```
-
-Extracts fields from the dictionary. `.get(key)` returns `None` if the key is missing (instead of crashing).
-
----
-
-```python
-            price = meta.get("lastSoldPrice", "")
-            zip_code = meta.get("zip", "")
-            prop_type = meta.get("type", "")
-```
-
-Extracts specific metadata fields with empty-string defaults.
-
----
-
-```python
-            header = f"**{rank}.** `{doc_id}`"
-            if sim is not None:
-                header += f" — similarity ≈ **{sim:.3f}** (distance {float(dist):.4f})"
-            st.markdown(header)
-```
-
-Builds a Markdown-formatted header string. `{sim:.3f}` formats the number to 3 decimal places. `{float(dist):.4f}` formats to 4 decimal places. These format specifiers control how many digits appear after the decimal point.
-
----
-
-```python
-            cols = st.columns(4)
-            cols[0].markdown(f"Sold: **${price}**" if str(price) else "Sold: —")
-            cols[1].markdown(f"ZIP: **{zip_code}**" if zip_code else "ZIP: —")
-            cols[2].markdown(f"Type: **{prop_type}**" if prop_type else "Type: —")
-            cols[3].markdown(f"Sqft: **{meta.get('sqft', '')}**")
-```
-
-- **`st.columns(4)`** creates 4 side-by-side columns. `cols` is a list of 4 column objects.
-- Each column renders one piece of metadata. The ternary `"..." if condition else "..."` shows a dash when data is missing.
-
----
-
-```python
-            snippet = text[:1200] + ("…" if len(text) > 1200 else "")
-            st.caption(snippet)
-            st.divider()
-```
-
-- **`text[:1200]`** — slice notation to take the first 1200 characters. Some listings are very long; truncating prevents the page from becoming unwieldy.
-- **`st.caption(...)`** renders small, muted text.
-- **`st.divider()`** renders a horizontal line between results.
-
----
-
-```python
-if __name__ == "__main__":
-    main()
-```
-
-Standard entry point guard. Streamlit actually runs this file by importing it, so this guard is not strictly necessary here — but it is good practice and does no harm.
-
-#### d. How this file connects to the rest
-
-- **Imports from:** `constants.py`, `core.py`, `streamlit`.
-- **Called by:** The user runs `streamlit run semantic_search/search_app.py`.
-- **Does not call:** `server.py` (it uses `core.py` directly, bypassing the API).
-
----
-
-### 5.6 `__init__.py`
+### 5.5 `__init__.py`
 
 #### a. Purpose
 
 ```python
-# Semantic search package (ingest, Streamlit, FastAPI, Next.js client).
+# Semantic search package (ingest, FastAPI, Next.js client).
 ```
 
 This file is almost empty — it contains a single comment. Its *existence* is what matters: it tells Python that the `semantic_search/` folder is a **package** (a collection of modules that can be imported as a group). Without it, Python would not recognize `from semantic_search.server import app` (which is how uvicorn loads the API).
@@ -1518,7 +1303,7 @@ This file is almost empty — it contains a single comment. Its *existence* is w
 
 ---
 
-### 5.7 `requirements.txt`
+### 5.6 `requirements.txt`
 
 #### a. Purpose
 
@@ -1526,7 +1311,6 @@ This file is almost empty — it contains a single comment. Its *existence* is w
 # Project 1 — semantic search stack (local embeddings, no OpenAI key required)
 chromadb>=0.4.22
 sentence-transformers>=2.2.0
-streamlit>=1.28.0
 pandas>=2.0.0
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
@@ -1541,107 +1325,12 @@ When you run `pip install -r requirements.txt`, pip reads this file and installs
 
 #### b. How this file connects to the rest
 
-- **Used by:** `pip install` and the Dockerfile's `RUN pip install` command.
+- **Used by:** `pip install` (and the App Runner / CI build that installs dependencies).
 - **Defines:** All the libraries that the Python files import.
 
 ---
 
-### 5.8 `Dockerfile`
-
-#### a. Purpose
-
-A **Dockerfile** is a recipe for building a **Docker container** — a lightweight, portable box that packages your application with all its dependencies. Instead of telling someone "install Python 3.12, install these libraries, copy these files, run this command," you give them one Dockerfile and they can build and run it on any machine that has Docker.
-
-#### b. Line-by-line walkthrough
-
-```dockerfile
-FROM python:3.12-slim-bookworm
-```
-
-**`FROM`** specifies the **base image** — a pre-built starting point. `python:3.12-slim-bookworm` is an official image that includes Python 3.12 on a minimal Debian Linux ("slim" means fewer pre-installed packages, so the image is smaller; "bookworm" is the Debian version name).
-
-**Analogy:** Think of `FROM` as choosing which model of house to start with. You're starting with a house that already has plumbing (Python) installed.
-
----
-
-```dockerfile
-WORKDIR /app
-```
-
-**`WORKDIR`** sets the working directory inside the container. All subsequent commands will run from `/app`. If the directory does not exist, Docker creates it.
-
----
-
-```dockerfile
-COPY semantic_search/requirements.txt /app/semantic_search/requirements.txt
-RUN pip install --no-cache-dir -r /app/semantic_search/requirements.txt
-```
-
-- **`COPY`** copies a file from your computer (the "build context") into the container. Here it copies `requirements.txt`.
-- **`RUN`** executes a command during the build. `pip install --no-cache-dir -r ...` installs the Python dependencies. `--no-cache-dir` saves space by not storing pip's download cache inside the image.
-
-**Why copy requirements.txt separately and install before copying the code?** Docker caches each step. If your code changes but requirements.txt stays the same, Docker reuses the cached installation step — saving minutes on rebuilds. This is called **layer caching**.
-
----
-
-```dockerfile
-COPY semantic_search/constants.py \
-     semantic_search/core.py \
-     semantic_search/server.py \
-     semantic_search/__init__.py \
-     /app/semantic_search/
-```
-
-Copies only the Python files the API needs. Notice that `embed_listings.py`, `search_app.py`, and the CSV are **not** copied — the container only needs to serve the API, not re-ingest data. The `\` at the end of each line is a line continuation character.
-
----
-
-```dockerfile
-COPY semantic_search/chroma_data /app/semantic_search/chroma_data
-```
-
-Copies the pre-built vector database into the container. This means you must run `embed_listings.py` *before* building the Docker image.
-
----
-
-```dockerfile
-ENV PYTHONUNBUFFERED=1
-```
-
-**`ENV`** sets an environment variable inside the container. `PYTHONUNBUFFERED=1` tells Python to flush output immediately (rather than buffering it). Without this, `print()` statements might not appear in Docker logs for a long time.
-
----
-
-```dockerfile
-ENV PYTHONPATH=/app
-```
-
-Tells Python to look for importable modules in `/app`. This is needed because the code uses `from semantic_search.server import app` style imports, and `/app` is the root where the `semantic_search/` package lives.
-
----
-
-```dockerfile
-EXPOSE 8000
-```
-
-**`EXPOSE`** documents that the container listens on port 8000. It does not actually open the port — that happens when you run the container with `-p 8000:8000`. But it serves as documentation and is used by some tools.
-
----
-
-```dockerfile
-CMD ["uvicorn", "semantic_search.server:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-**`CMD`** specifies the default command that runs when the container starts. This launches Uvicorn, which loads your FastAPI app and listens on all network interfaces (`0.0.0.0`) on port 8000. The JSON array format (called **exec form**) is preferred over a shell string because it runs the command directly without an intermediary shell process.
-
-#### c. How this file connects to the rest
-
-- **Uses:** `requirements.txt`, `constants.py`, `core.py`, `server.py`, `__init__.py`, `chroma_data/`.
-- **Does not include:** `embed_listings.py`, `search_app.py`, `web/`, the CSV (these are not needed at API runtime).
-
----
-
-### 5.9 `web/lib/types.ts`
+### 5.7 `web/lib/types.ts`
 
 #### a. Purpose
 
@@ -1689,7 +1378,7 @@ The overall API response shape: an object with a `results` field containing an a
 
 ---
 
-### 5.10 `web/app/globals.css`
+### 5.8 `web/app/globals.css`
 
 #### a. Purpose
 
@@ -1759,7 +1448,7 @@ Applies the background and text colors to the `<body>` element, and sets a fallb
 
 ---
 
-### 5.11 `web/app/layout.tsx`
+### 5.9 `web/app/layout.tsx`
 
 #### a. Purpose
 
@@ -1864,7 +1553,7 @@ Returns the HTML structure. This is **JSX** — a syntax extension that lets you
 
 ---
 
-### 5.12 `web/app/page.tsx`
+### 5.10 `web/app/page.tsx`
 
 #### a. Purpose
 
@@ -1905,7 +1594,7 @@ export default function Home() {
 
 ---
 
-### 5.13 `web/components/SearchPanel.tsx`
+### 5.11 `web/components/SearchPanel.tsx`
 
 #### a. Purpose
 
@@ -2243,7 +1932,7 @@ Displays the listing text, truncated to 1200 characters if needed. `.slice(0, 12
 
 ---
 
-### 5.14 `web/next.config.ts`
+### 5.12 `web/next.config.ts`
 
 #### a. Purpose
 
@@ -2263,7 +1952,7 @@ It imports the `NextConfig` type for autocompletion, creates an empty config obj
 
 ---
 
-### 5.15 `web/postcss.config.mjs`
+### 5.13 `web/postcss.config.mjs`
 
 #### a. Purpose
 
@@ -2285,7 +1974,7 @@ The `.mjs` extension means this is an **ES module** (uses `export default` inste
 
 ---
 
-### 5.16 `web/tsconfig.json`
+### 5.14 `web/tsconfig.json`
 
 #### a. Purpose
 
@@ -2391,7 +2080,7 @@ Loads the Next.js TypeScript plugin, which provides better autocompletion for Ne
 
 ---
 
-### 5.17 `web/.env.local.example`
+### 5.15 `web/.env.local.example`
 
 #### a. Purpose
 
@@ -2414,7 +2103,7 @@ cp .env.local.example .env.local
 
 ---
 
-### 5.18 `web/package.json`
+### 5.16 `web/package.json`
 
 #### a. Purpose
 
@@ -2514,7 +2203,7 @@ Encoding (this may take a few minutes on full data)…
 Batches: 100%|████████████████████| 4/4 [00:02<00:00]
   Indexed 200/200
 Done. Vector store: /Users/sedly/Desktop/machine_learning/semantic_search/chroma_data
-Next: streamlit run semantic_search/search_app.py
+Next: npm run dev (in semantic_search/web)
 ```
 
 **Common errors:**
@@ -2581,33 +2270,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser. Type a query like "waterfront condo with ocean view" and click Search.
 
-### Step 5 (optional): Streamlit UI
+### Step 5 (optional): Deploy the API
 
-In yet another terminal:
-
-```bash
-streamlit run semantic_search/search_app.py
-```
-
-This opens a browser tab at `http://localhost:8501` with the Streamlit interface. Note: Streamlit talks directly to ChromaDB (through `core.py`), so the FastAPI server does NOT need to be running for Streamlit.
-
-### Step 6 (optional): Docker
-
-Build and run the API in a container:
-
-```bash
-python semantic_search/embed_listings.py    # Ensure chroma_data exists
-docker build -t fl-search-api -f semantic_search/Dockerfile .
-docker run -p 8000:8000 -e ALLOW_ORIGINS=http://localhost:3000 fl-search-api
-```
-
-- **`docker build -t fl-search-api -f semantic_search/Dockerfile .`**
-  - `-t fl-search-api` — names the image.
-  - `-f semantic_search/Dockerfile` — specifies which Dockerfile to use.
-  - `.` — the build context (current directory).
-- **`docker run -p 8000:8000 -e ALLOW_ORIGINS=http://localhost:3000 fl-search-api`**
-  - `-p 8000:8000` — maps port 8000 on your machine to port 8000 in the container.
-  - `-e ALLOW_ORIGINS=...` — sets an environment variable inside the container.
+There is no Dockerfile in this repo. Deploy FastAPI using your host’s workflow — for example **AWS App Runner** connected to GitHub (source-based build), or Railway / Render. See `README.md` for environment variables (`ALLOW_ORIGINS`, `PORT`) and how `chroma_data/` is produced for production.
 
 ---
 
@@ -2682,7 +2347,7 @@ Here are things you could try to deepen your understanding. Each one is a small 
 
 2. **Try a different embedding model.** Run `embed_listings.py` with `--model sentence-transformers/all-mpnet-base-v2` (a more powerful but slower model that produces 768-dimensional vectors). Then search for the same queries and compare results. Connect this to the concept of the "vector space" discussed in `constants.py` — why must the query model match the ingest model?
 
-3. **Add a new metadata field.** The CSV probably has columns that are not included in the metadata (like `city` or `address`). In `embed_listings.py`, add another entry to the `metadatas` dictionary. Then display it in `SearchPanel.tsx` and `search_app.py`. This exercises the full pipeline from ingestion to display.
+3. **Add a new metadata field.** The CSV probably has columns that are not included in the metadata (like `city` or `address`). In `embed_listings.py`, add another entry to the `metadatas` dictionary. Then display it in `SearchPanel.tsx`. This exercises the full pipeline from ingestion to display.
 
 4. **Add a filter to the search.** ChromaDB supports `where` clauses (like SQL's `WHERE`). Try modifying `search_listings()` in `core.py` to accept an optional `zip_filter` parameter and pass it to `collection.query(where={"zip": zip_filter})`. This connects to the idea of combining semantic search with traditional filtering.
 

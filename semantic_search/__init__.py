@@ -1,1 +1,1 @@
-# Semantic search package (ingest, Streamlit, FastAPI, Next.js client).
+# Semantic search package (ingest, FastAPI, Next.js client).

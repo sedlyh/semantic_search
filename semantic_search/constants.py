@@ -4,7 +4,7 @@ semantic_search/constants.py
 Single source of truth for paths and model name.
 
 Why this file exists:
-  Ingest (embed_listings.py) and search (search_app.py) must use the SAME
+  Ingest (embed_listings.py) and search (core.py / server.py) must use the SAME
   embedding model and the SAME Chroma collection. If they drift, query vectors
   live in a different space than stored vectors — results are meaningless.
 

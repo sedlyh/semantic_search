@@ -58,7 +58,7 @@ def main() -> None:
     parser.add_argument(
         "--model",
         default=DEFAULT_MODEL,
-        help="Must stay in sync with search_app.py / constants.py",
+        help="Must stay in sync with core.py / constants.py",
     )
     parser.add_argument(
         "--limit",
@@ -150,7 +150,7 @@ def main() -> None:
         print(f"  Indexed {end}/{n}")
 
     print(f"Done. Vector store: {CHROMA_DIR}")
-    print("Next: streamlit run semantic_search/search_app.py")
+    print("Next: uvicorn semantic_search.server:app --host 0.0.0.0 --port 8000")
 
 
 if __name__ == "__main__":

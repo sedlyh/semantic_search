@@ -1,5 +1,5 @@
 """
-Shared search logic for Streamlit, FastAPI, and tests.
+Shared search logic for FastAPI and tests.
 
 Both ingest (embed_listings.py) and this module MUST use the same model
 with normalize_embeddings=True. If they drift, cosine distances are meaningless

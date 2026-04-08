@@ -1,10 +1,10 @@
 # Semantic search (portfolio stack)
 
-Florida MLS listing descriptions → embeddings (sentence-transformers) → ChromaDB → **FastAPI** or **Streamlit**. A **Next.js** app on Vercel calls the API over HTTPS.
+Florida MLS listing descriptions → embeddings (sentence-transformers) → ChromaDB → **FastAPI**. A **Next.js** app on Vercel calls the API over HTTPS.
 
 ## Why two deployments?
 
-Vercel runs the Next.js front end. **Chroma, PyTorch, and the embedding model do not run on Vercel serverless** in this setup. The Python API runs on any host that supports long-lived processes and enough RAM (Railway, Render, Fly.io, your laptop, or the included Dockerfile).
+Vercel runs the Next.js front end. **Chroma, PyTorch, and the embedding model do not run on Vercel serverless** in this setup. The Python API runs on any host that supports long-lived processes and enough RAM (Railway, Render, Fly.io, AWS App Runner, your laptop).
 
 ```mermaid
 flowchart LR
@@ -54,12 +54,6 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The default API URL in code is `http://127.0.0.1:8000`.
 
-### 5. Streamlit (optional, same backend logic)
-
-```bash
-streamlit run semantic_search/search_app.py
-```
-
 Shared search logic lives in `semantic_search/core.py`.
 
 ## Environment variables
@@ -83,25 +77,12 @@ Shared search logic lives in `semantic_search/core.py`.
 - Copy or generate `chroma_data` on the server (run `embed_listings.py` in build or mount a volume).  
 - Set `ALLOW_ORIGINS` to your Vercel URL(s).
 
-### Docker
-
-Build from **repo root** `machine_learning/` (so paths match the Dockerfile):
-
-```bash
-python semantic_search/embed_listings.py   # ensure chroma_data exists
-docker build -t fl-search-api -f semantic_search/Dockerfile .
-docker run -p 8000:8000 -e ALLOW_ORIGINS=http://localhost:3000 fl-search-api
-```
-
-The first real query may download Hugging Face model weights into the container unless you bake a cache layer.
-
 ## Project layout
 
 - `constants.py` — paths, default model, collection name  
 - `embed_listings.py` — CSV → embeddings → Chroma  
 - `core.py` — shared `search_listings()`  
 - `server.py` — FastAPI app  
-- `search_app.py` — Streamlit UI  
 - `web/` — Next.js (Vercel)  
 
 ## API shapes
