@@ -10,9 +10,27 @@ import os
 import tempfile
 import zipfile
 from pathlib import Path
+from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
 from constants import CHROMA_DIR
+
+
+def _safe_extract_zip(zf: zipfile.ZipFile, dest: Path) -> None:
+    """Extract zip under *dest*, rejecting paths that escape *dest* (zip slip)."""
+    dest = dest.resolve()
+    for member in zf.infolist():
+        if member.is_dir():
+            continue
+        parts = Path(member.filename).parts
+        if ".." in parts or Path(member.filename).is_absolute():
+            raise RuntimeError(f"Unsafe zip path: {member.filename!r}")
+        target = (dest / member.filename).resolve()
+        try:
+            target.relative_to(dest)
+        except ValueError as e:
+            raise RuntimeError(f"Unsafe zip path: {member.filename!r}") from e
+    zf.extractall(dest)
 
 
 def _needs_download() -> bool:
@@ -25,6 +43,9 @@ def main() -> int:
     url = os.environ.get("CHROMA_HTTP_URL", "").strip()
     if not url:
         return 0
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        raise SystemExit("CHROMA_HTTP_URL must use https://")
     if not _needs_download():
         print(f"Chroma already present at {CHROMA_DIR}, skipping download.")
         return 0
@@ -35,12 +56,12 @@ def main() -> int:
     with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
         zpath = tmp.name
     try:
-        print(f"Downloading Chroma index from CHROMA_HTTP_URL …")
+        print("Downloading Chroma index from CHROMA_HTTP_URL …")
         urlretrieve(url, zpath)
         # Extract into parent so zip root folders land under chroma_data/
         parent = CHROMA_DIR.parent
         with zipfile.ZipFile(zpath, "r") as zf:
-            zf.extractall(parent)
+            _safe_extract_zip(zf, parent)
         print(f"Extracted index under {CHROMA_DIR}")
     finally:
         Path(zpath).unlink(missing_ok=True)

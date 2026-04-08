@@ -59,7 +59,8 @@ Shared search logic lives in `semantic_search/core.py`.
 ## Environment variables
 
 - **FastAPI — `ALLOW_ORIGINS`:** comma-separated CORS origins, e.g. `http://localhost:3000,https://your-app.vercel.app`. Restart the API after changes.
-- **FastAPI — `CHROMA_HTTP_URL` (optional, production):** HTTPS URL to a `.zip` of `semantic_search/chroma_data/` — used by `scripts/run_api.sh` on App Runner when the vector index is not in the repo.
+- **FastAPI — `CHROMA_HTTP_URL` (optional, production):** `https://…` URL to a `.zip` of `semantic_search/chroma_data/` — used by `scripts/run_api.sh` on App Runner when the vector index is not in the repo (HTTP is rejected).
+- **Build — `HF_TOKEN` (optional):** Hugging Face token for higher rate limits when the App Runner **build** step downloads the sentence-transformers model. Set in the App Runner service **Build** environment (not in git).
 - **FastAPI — `PORT`:** listen port; App Runner and many PaaS set this automatically.
 - **Next.js (`.env.local`) — `NEXT_PUBLIC_SEARCH_API_URL`:** API base URL, no trailing slash, e.g. `https://api.example.com`.
 - **Vercel project settings — `NEXT_PUBLIC_SEARCH_API_URL`:** same value, pointing at your deployed FastAPI HTTPS URL.

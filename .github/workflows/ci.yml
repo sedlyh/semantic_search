@@ -1,0 +1,47 @@
+# Smoke-test Python API imports and Next.js build on every push / PR.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install API dependencies (CPU torch first)
+        run: |
+          pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+          pip install --no-cache-dir -r semantic_search/requirements.txt
+
+      - name: Byte-compile and import check
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m compileall semantic_search -q
+          python -c "from semantic_search.server import app; print('FastAPI app:', app.title)"
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: semantic_search/web/package-lock.json
+
+      - name: Install and build Next.js
+        working-directory: semantic_search/web
+        run: |
+          npm ci
+          npm run build

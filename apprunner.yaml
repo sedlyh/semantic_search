@@ -22,4 +22,3 @@ run:
   command: bash scripts/run_api.sh
   network:
     port: 8000
-    env: PORT
