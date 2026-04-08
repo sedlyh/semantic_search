@@ -1,0 +1,25 @@
+# AWS App Runner — source-based deploy (place repo root as the App Runner "Source directory",
+# or leave default so this file at the repository root is used).
+#
+# Sign up for App Runner before 2026-04-30 if you are a new customer (AWS availability change).
+# https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html
+#
+version: 1.0
+runtime: python3
+
+build:
+  commands:
+    pre-build:
+      # CPU-only PyTorch first so sentence-transformers does not pull CUDA wheels (~GB smaller).
+      - pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+    build:
+      - pip install --no-cache-dir -r semantic_search/requirements.txt
+    post-build:
+      # Warm Hugging Face model cache so the first /search is not minutes slow.
+      - python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
+
+run:
+  command: bash scripts/run_api.sh
+  network:
+    port: 8000
+    env: PORT

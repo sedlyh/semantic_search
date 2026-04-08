@@ -59,6 +59,8 @@ Shared search logic lives in `semantic_search/core.py`.
 ## Environment variables
 
 - **FastAPI — `ALLOW_ORIGINS`:** comma-separated CORS origins, e.g. `http://localhost:3000,https://your-app.vercel.app`. Restart the API after changes.
+- **FastAPI — `CHROMA_HTTP_URL` (optional, production):** HTTPS URL to a `.zip` of `semantic_search/chroma_data/` — used by `scripts/run_api.sh` on App Runner when the vector index is not in the repo.
+- **FastAPI — `PORT`:** listen port; App Runner and many PaaS set this automatically.
 - **Next.js (`.env.local`) — `NEXT_PUBLIC_SEARCH_API_URL`:** API base URL, no trailing slash, e.g. `https://api.example.com`.
 - **Vercel project settings — `NEXT_PUBLIC_SEARCH_API_URL`:** same value, pointing at your deployed FastAPI HTTPS URL.
 
@@ -71,11 +73,31 @@ Shared search logic lives in `semantic_search/core.py`.
 
 ## Deploy the API (examples)
 
-- **Railway / Render / Fly:** Python service, start command  
-  `uvicorn semantic_search.server:app --host 0.0.0.0 --port $PORT`  
-  (set `PORT` if the platform provides it).  
-- Copy or generate `chroma_data` on the server (run `embed_listings.py` in build or mount a volume).  
+### Any host (incl. Railway / Render / Fly)
+
+- Start command (from **repository root**):  
+  `PYTHONPATH=. uvicorn semantic_search.server:app --host 0.0.0.0 --port $PORT`  
+- `chroma_data/` is not in git. Either run `embed_listings.py` in CI before deploy, attach a volume, or use `CHROMA_HTTP_URL` (see below).  
 - Set `ALLOW_ORIGINS` to your Vercel URL(s).
+
+### AWS App Runner (source from GitHub)
+
+1. In the App Runner console, create a service **from source** and connect this repo.  
+2. Use **repository root** as the source directory so `apprunner.yaml` at the root is picked up.  
+3. **Runtime env vars** (minimum):  
+   - `ALLOW_ORIGINS` — e.g. `https://your-app.vercel.app` (comma-separated if several).  
+   - Optional: `CHROMA_HTTP_URL` — HTTPS URL to a **`.zip`** of `semantic_search/chroma_data` (see below). If unset, you must bake `chroma_data` another way or `/search` returns 503 until data exists.  
+4. Deploy. App Runner runs `bash scripts/run_api.sh`, which installs nothing extra at runtime but uses `PORT` automatically.
+
+**Packaging `chroma_data` for `CHROMA_HTTP_URL`:** from repo root, after `embed_listings.py`:
+
+```bash
+cd semantic_search && zip -r ../chroma_data.zip chroma_data
+```
+
+Upload `chroma_data.zip` to S3 (or any HTTPS URL App Runner can reach) and set `CHROMA_HTTP_URL` to that URL.
+
+> **Note:** AWS announced that **new App Runner customers** must sign up before **2026-04-30**. See [App Runner availability](https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html).
 
 ## Project layout
 
