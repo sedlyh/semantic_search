@@ -6,8 +6,7 @@ Run from repo root (machine_learning/):
 
 Environment:
     ALLOW_ORIGINS — comma-separated CORS origins (default: http://localhost:3000)
-    PORT — listen port (App Runner, Render, etc.); use scripts/run_api.sh on App Runner
-    CHROMA_HTTP_URL — optional HTTPS URL to a .zip of chroma_data/ if the index is not in the image
+    PORT — optional; many hosts set this for production (use with uvicorn --port $PORT)
 """
 
 from __future__ import annotations

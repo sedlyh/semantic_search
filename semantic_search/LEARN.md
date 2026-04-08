@@ -2,7 +2,7 @@
 
 > This document walks you through **every file, every line, and every concept** in this project.
 > It is written for someone who knows what variables, functions, imports, loops, and classes are — but is encountering most of these libraries and patterns for the first time.
-> **Note:** The Streamlit UI (`search_app.py`) and root `Dockerfile` were removed. Use **FastAPI** + **Next.js** only; deploy the API with AWS App Runner from source (or another Python host) as described in `README.md`.
+> **Note:** The Streamlit UI (`search_app.py`) and root `Dockerfile` were removed. Use **FastAPI** + **Next.js** only; deploy the API using any Python host you choose, as described in `README.md`.
 
 > Read it top-to-bottom the first time; use the table of contents to jump around later.
 
@@ -174,7 +174,7 @@ npm install
 - **What it is:** An **ASGI server** — the actual program that listens for network connections on a port (like port 8000) and passes incoming HTTP requests to your FastAPI code.
 - **What problem it solves:** FastAPI defines *what* to do with requests, but it cannot listen to the network by itself. Uvicorn handles the low-level networking: opening a socket, accepting connections, speaking HTTP.
 - **Analogy:** If FastAPI is the chef, Uvicorn is the waiter who stands at the door, takes orders from customers, and brings them to the kitchen.
-- **Used in:** The command line (you run `uvicorn semantic_search.server:app ...`) and in production (e.g. App Runner or your host's start command).
+- **Used in:** The command line (you run `uvicorn semantic_search.server:app ...`) and in production (your host's start command).
 
 ### 3.2 JavaScript/Next.js Dependencies (`package.json`)
 
@@ -1325,7 +1325,7 @@ When you run `pip install -r requirements.txt`, pip reads this file and installs
 
 #### b. How this file connects to the rest
 
-- **Used by:** `pip install` (and the App Runner / CI build that installs dependencies).
+- **Used by:** `pip install` (and CI or container builds that install dependencies).
 - **Defines:** All the libraries that the Python files import.
 
 ---
@@ -2272,7 +2272,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser. Type a quer
 
 ### Step 5 (optional): Deploy the API
 
-There is no Dockerfile in this repo. Deploy FastAPI using your host’s workflow — for example **AWS App Runner** connected to GitHub (source-based build), or Railway / Render. See `README.md` for environment variables (`ALLOW_ORIGINS`, `PORT`) and how `chroma_data/` is produced for production.
+There is no Dockerfile in this repo unless you add one. Deploy FastAPI using your host’s workflow (Railway, Render, Fly.io, ECS, etc.). See `README.md` for environment variables (`ALLOW_ORIGINS`, `PORT`) and how `chroma_data/` is produced for production.
 
 ---
 
